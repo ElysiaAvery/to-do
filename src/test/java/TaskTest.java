@@ -5,20 +5,8 @@ import java.time.LocalDateTime;
 
 public class TaskTest {
 
-  @Before
-  public void setUp() {
-    DB.sql2o = new Sql2o("jdbc:postgresql://localhost:5432/to_do_test", null, null);
-  }
-
-  @After
-  public void tearDown() {
-    try(Connection con = DB.sql2o.open()) {
-      String deleteTasksQuery = "DELETE FROM tasks *;";
-      String deleteCategoriesQuery = "DELETE FROM categories *;";
-      con.createQuery(deleteTasksQuery).executeUpdate();
-      con.createQuery(deleteCategoriesQuery).executeUpdate();
-    }
-  }
+  @Rule
+  public DatabaseRule database = new DatabaseRule();
 
   @Test
   public void Task_instantiatesCorrectly_true() {
@@ -106,5 +94,22 @@ public class TaskTest {
     myTask.save();
     Task savedTask = Task.find(myTask.getId());
     assertEquals(savedTask.getCategoryId(), myCategory.getId());
+  }
+
+  @Test
+  public void update_updatesTaskDescription_true() {
+    Task myTask = new Task("Mow the lawn", 1);
+    myTask.save();
+    myTask.update("Take a nap");
+    assertEquals("Take a nap", Task.find(myTask.getId()).getDescription());
+  }
+
+  @Test
+  public void delete_deletesTask_true() {
+    Task myTask = new Task("Mow the lawn", 1);
+    myTask.save();
+    int myTaskId = myTask.getId();
+    myTask.delete();
+    assertEquals(null, Task.find(myTaskId));
   }
 }
